@@ -1,0 +1,9 @@
+{
+  "apps": [
+    {
+      "name": "Business Community Hub",
+      "path": "expo",
+      "framework": "react-native"
+    }
+  ]
+}
