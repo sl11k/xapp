@@ -168,20 +168,36 @@ export default function ExploreScreen() {
           {language === 'ar' ? 'المواضيع الرائجة' : 'Trending Topics'}
         </Text>
       </View>
-      {trendingTopics.map((topic) => (
-        <Pressable
-          key={topic.id}
-          style={({ pressed }) => [styles.trendRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }, pressed && styles.pressed]}
-        >
-          <View style={[styles.trendIcon, topic.isHot ? styles.trendIconHot : null]}>
-            <TrendingUp color={topic.isHot ? colors.rose : colors.textMuted} size={14} />
-          </View>
-          <View style={[styles.trendInfo, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
-            <Text style={styles.trendLabel}>{getLocalizedText(topic.label, language)}</Text>
-            <Text style={styles.trendPosts}>{topic.posts} {language === 'ar' ? 'منشور' : 'posts'}</Text>
-          </View>
-        </Pressable>
-      ))}
+      <View style={[styles.hashtagsWrap, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        {trendingTopics.map((topic) => {
+          const label = getLocalizedText(topic.label, language);
+          const slug = label.replace(/\s+/g, '');
+          return (
+            <Pressable
+              key={topic.id}
+              style={({ pressed }) => [
+                styles.hashtagPill,
+                topic.isHot
+                  ? { backgroundColor: colors.rose + '18', borderColor: colors.rose + '40' }
+                  : { backgroundColor: colors.bgCard, borderColor: colors.border },
+                pressed && styles.pressed,
+              ]}
+            >
+              <TrendingUp
+                size={11}
+                color={topic.isHot ? colors.rose : colors.textMuted}
+                strokeWidth={2.5}
+              />
+              <Text style={[styles.hashtagText, { color: topic.isHot ? colors.rose : colors.textMuted }]}>
+                #{slug}
+              </Text>
+              <Text style={[styles.hashtagCount, { color: topic.isHot ? colors.rose + 'CC' : colors.textMuted }]}>
+                {topic.posts}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   ), [isRTL, language, colors, styles]);
 
@@ -697,35 +713,27 @@ const createStyles = (c: any) => StyleSheet.create({
   pressed: {
     opacity: 0.7,
   },
-  trendRow: {
-    alignItems: 'center',
-    gap: 12,
+  hashtagsWrap: {
+    flexWrap: 'wrap',
     paddingHorizontal: 20,
-    paddingVertical: 10,
+    gap: 10,
   },
-  trendIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: c.bgMuted,
+  hashtagPill: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 20,
+    borderWidth: 1,
   },
-  trendIconHot: {
-    backgroundColor: c.roseLight,
+  hashtagText: {
+    fontSize: 14,
+    fontWeight: '700' as const,
   },
-  trendInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  trendLabel: {
-    fontSize: 15,
+  hashtagCount: {
+    fontSize: 11,
     fontWeight: '600' as const,
-    color: c.text,
-  },
-  trendPosts: {
-    fontSize: 12,
-    color: c.textMuted,
   },
   gridWrap: {
     paddingHorizontal: 20,
