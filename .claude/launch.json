@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Expo (Mobile / Tunnel)",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--tunnel"],
+      "port": 8081
+    },
+    {
+      "name": "Expo Web (Tunnel)",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["expo", "start", "--web"],
+      "port": 19006
+    }
+  ]
+}

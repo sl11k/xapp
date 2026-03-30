@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_Preview__preview_start",
+      "Bash(where bun:*)",
+      "Bash(where npx:*)",
+      "Bash(where npm:*)",
+      "Bash(npm run:*)",
+      "Bash(where expo:*)",
+      "Bash(npx expo:*)"
+    ]
+  }
+}
