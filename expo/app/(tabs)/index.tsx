@@ -1,9 +1,6 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
-  Animated,
   FlatList,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -26,7 +23,6 @@ import {
   Search,
   Share2,
   Sparkles,
-  TrendingUp,
 } from 'lucide-react-native';
 import { useMutation, useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
 
@@ -48,6 +44,8 @@ import type { ResourceItem } from '@/data/businessHub';
 import type { EnrichedPost } from '@/types/post';
 
 const { width } = Dimensions.get('window');
+
+type ActiveSection = 'foryou' | 'following' | 'knowledge';
 
 function getAvatarColor(id: string): string {
   const colors = ['#6366F1', '#EC4899', '#8B5CF6', '#10B981', '#F59E0B', '#3B82F6'];
@@ -74,121 +72,137 @@ function formatTimeAgo(dateStr: string): string {
 const BASE_CATEGORIES_AR = ['لك', 'الحوكمة', 'الفرص', 'تحليلات'];
 const BASE_CATEGORIES_EN = ['For you', 'Governance', 'Opportunities', 'Insights'];
 
-// ── Section Segment Bar ─────────────────────────────────────────────────────
-function SectionSegment({
+// ─────────────────────────────────────────────────────────────────────────────
+// TikTok-style Header with centered tabs
+// ─────────────────────────────────────────────────────────────────────────────
+function HomeHeader({
   active,
   onChange,
 }: {
-  active: 'feed' | 'knowledge';
-  onChange: (s: 'feed' | 'knowledge') => void;
+  active: ActiveSection;
+  onChange: (s: ActiveSection) => void;
 }) {
+  const router = useRouter();
   const { isRTL, language } = useLanguage();
   const { colors } = useTheme();
-  const horizontalPadding = width >= 768 ? 32 : 20;
 
-  const labels = {
-    feed: language === 'ar' ? 'لك' : 'For You',
-    knowledge: language === 'ar' ? 'مركز المعرفة' : 'Knowledge',
-  };
-
-  const order: Array<'feed' | 'knowledge'> = isRTL
-    ? ['knowledge', 'feed']
-    : ['feed', 'knowledge'];
+  const tabs: { key: ActiveSection; label: string }[] = isRTL
+    ? [
+        { key: 'knowledge', label: language === 'ar' ? 'مركز المعرفة' : 'Knowledge' },
+        { key: 'following', label: language === 'ar' ? 'أتابعه' : 'Following' },
+        { key: 'foryou',    label: language === 'ar' ? 'لك' : 'For You' },
+      ]
+    : [
+        { key: 'foryou',    label: language === 'ar' ? 'لك' : 'For You' },
+        { key: 'following', label: language === 'ar' ? 'أتابعه' : 'Following' },
+        { key: 'knowledge', label: language === 'ar' ? 'مركز المعرفة' : 'Knowledge' },
+      ];
 
   return (
-    <View
-      style={[
-        segStyles.wrapper,
-        { paddingHorizontal: horizontalPadding, flexDirection: isRTL ? 'row-reverse' : 'row' },
-      ]}
-    >
-      {order.map((key) => {
-        const isActive = active === key;
-        return (
-          <PressableScale
-            key={key}
-            onPress={() => {
-              onChange(key);
-              void Haptics.selectionAsync();
-            }}
-            style={[segStyles.tab, isActive && { borderBottomColor: colors.accent, borderBottomWidth: 2.5 }]}
-          >
-            {key === 'knowledge' && (
-              <BookOpen
-                size={14}
-                color={isActive ? colors.accent : colors.textMuted}
-                strokeWidth={2.2}
-                style={{ marginRight: isRTL ? 0 : 5, marginLeft: isRTL ? 5 : 0 }}
-              />
-            )}
-            <Text
-              style={[
-                segStyles.label,
-                { color: isActive ? colors.accent : colors.textMuted },
-                isActive && { fontWeight: '800' },
-              ]}
+    <View style={[hStyles.container, { backgroundColor: colors.bg, borderBottomColor: colors.border }]}>
+      {/* Left icon */}
+      <PressableScale
+        onPress={() => router.push('/explore')}
+        style={hStyles.sideBtn}
+      >
+        <Search color={colors.text} size={22} strokeWidth={2} />
+      </PressableScale>
+
+      {/* Center tabs */}
+      <View style={[hStyles.tabsRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        {tabs.map((tab) => {
+          const isActive = active === tab.key;
+          return (
+            <Pressable
+              key={tab.key}
+              onPress={() => {
+                onChange(tab.key);
+                void Haptics.selectionAsync();
+              }}
+              style={hStyles.tabItem}
             >
-              {labels[key]}
-            </Text>
-          </PressableScale>
-        );
-      })}
+              <Text
+                style={[
+                  hStyles.tabLabel,
+                  {
+                    color: isActive ? colors.text : colors.textMuted,
+                    fontWeight: isActive ? '800' : '500',
+                    fontSize: isActive ? 16 : 14,
+                  },
+                ]}
+              >
+                {tab.label}
+              </Text>
+              {isActive && (
+                <View style={[hStyles.tabUnderline, { backgroundColor: colors.text }]} />
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {/* Right icon */}
+      <PressableScale
+        onPress={() => router.push('/notifications')}
+        style={hStyles.sideBtn}
+      >
+        <Bell color={colors.text} size={22} strokeWidth={2} />
+        <View style={[hStyles.notifDot, { backgroundColor: colors.accent, borderColor: colors.bg }]} />
+      </PressableScale>
     </View>
   );
 }
 
-const segStyles = StyleSheet.create({
-  wrapper: {
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(100,100,100,0.12)',
-    marginBottom: 0,
-  },
-  tab: {
+const hStyles = StyleSheet.create({
+  container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    marginRight: 24,
-    borderBottomWidth: 2.5,
-    borderBottomColor: 'transparent',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  label: {
-    fontSize: 15,
-    fontWeight: '600',
-    letterSpacing: -0.2,
+  sideBtn: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  notifDot: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 2,
+  },
+  tabsRow: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    gap: 20,
+  },
+  tabItem: {
+    alignItems: 'center',
+    paddingBottom: 6,
+    position: 'relative',
+  },
+  tabLabel: {
+    letterSpacing: -0.3,
+  },
+  tabUnderline: {
+    position: 'absolute',
+    bottom: 0,
+    width: '60%',
+    height: 2.5,
+    borderRadius: 2,
   },
 });
 
-// ── Home Top Bar ─────────────────────────────────────────────────────────────
-function HomeTopBar() {
-  const router = useRouter();
-  const { isRTL } = useLanguage();
-  const { colors } = useTheme();
-  const horizontalPadding = width >= 768 ? 32 : 20;
-
-  return (
-    <View style={[styles.homeHeader, { paddingHorizontal: horizontalPadding, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-      <Text style={[styles.appTitle, { color: colors.accent }]}>muwassa</Text>
-      <View style={[styles.heroActions, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-        <PressableScale
-          onPress={() => router.push('/explore')}
-          style={[styles.heroControl, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
-        >
-          <AppIcon icon={Search} size={20} />
-        </PressableScale>
-        <PressableScale
-          onPress={() => router.push('/notifications')}
-          style={[styles.heroControl, { backgroundColor: colors.bgCard, borderColor: colors.border }]}
-        >
-          <AppIcon icon={Bell} size={20} />
-          <View style={[styles.notifDot, { backgroundColor: colors.accent, borderColor: colors.bgCard }]} />
-        </PressableScale>
-      </View>
-    </View>
-  );
-}
-
-// ── Category Tabs ────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Category Tabs (horizontal filter pills)
+// ─────────────────────────────────────────────────────────────────────────────
 function CategoryTabs({
   activeCategory,
   onSelect,
@@ -248,7 +262,9 @@ function CategoryTabs({
   );
 }
 
-// ── Compose Card ─────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Compose Card
+// ─────────────────────────────────────────────────────────────────────────────
 function ComposeCard() {
   const router = useRouter();
   const { isRTL, language } = useLanguage();
@@ -284,7 +300,9 @@ function ComposeCard() {
   );
 }
 
-// ── Feed Card ────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Feed Card
+// ─────────────────────────────────────────────────────────────────────────────
 const FeedCard = React.memo(function FeedCard({
   post,
   onPress,
@@ -429,7 +447,9 @@ const FeedCard = React.memo(function FeedCard({
   );
 });
 
-// ── Knowledge Article Card ────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Knowledge Article Card
+// ─────────────────────────────────────────────────────────────────────────────
 const ARTICLE_CATEGORY_COLORS: Record<string, string> = {
   Compliance: '#F59E0B',
   Governance: '#6366F1',
@@ -464,12 +484,7 @@ function KnowledgeArticleCard({
 
   if (isFeatured) {
     return (
-      <PremiumCard
-        variant="accent"
-        onPress={onPress}
-        style={styles.articleFeatured}
-        padding={0}
-      >
+      <PremiumCard variant="accent" onPress={onPress} style={styles.articleFeatured} padding={0}>
         <View style={styles.articleFeaturedInner}>
           <View style={[styles.articleTypeBadge, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
             <BookOpen size={11} color="#FFF" strokeWidth={2.5} />
@@ -507,7 +522,11 @@ function KnowledgeArticleCard({
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [styles.articleCard, { backgroundColor: colors.bgCard, borderColor: colors.border }, pressed && { opacity: 0.85 }]}
+      style={({ pressed }) => [
+        styles.articleCard,
+        { backgroundColor: colors.bgCard, borderColor: colors.border },
+        pressed && { opacity: 0.85 },
+      ]}
     >
       <View style={[styles.articleCardLeft, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
         <View style={[styles.articleTypeBadge, { backgroundColor: accentColor + '18' }]}>
@@ -548,7 +567,9 @@ function KnowledgeArticleCard({
   );
 }
 
-// ── Knowledge Section ────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Knowledge Section
+// ─────────────────────────────────────────────────────────────────────────────
 const KNOWLEDGE_FILTERS_AR = ['الكل', 'أدلة', 'قوالب', 'دراسات حالة', 'أُطر عمل'];
 const KNOWLEDGE_FILTERS_EN = ['All', 'Guides', 'Templates', 'Case Studies', 'Frameworks'];
 
@@ -574,6 +595,21 @@ function KnowledgeSection() {
 
   return (
     <View>
+      {/* Header */}
+      <View style={[styles.knowledgeHeader, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <BookOpen size={20} color={colors.accent} strokeWidth={2.2} />
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.knowledgeSectionTitle, { color: colors.text, textAlign: isRTL ? 'right' : 'left' }]}>
+            {language === 'ar' ? 'مركز المعرفة' : 'Knowledge Center'}
+          </Text>
+          <Text style={[styles.knowledgeSectionSub, { color: colors.textSecondary, textAlign: isRTL ? 'right' : 'left' }]}>
+            {language === 'ar'
+              ? 'أدلة، قوالب ودراسات حالة من خبراء الأعمال'
+              : 'Guides, templates & case studies from business experts'}
+          </Text>
+        </View>
+      </View>
+
       {/* Filter chips */}
       <FlatList
         horizontal
@@ -582,7 +618,7 @@ function KnowledgeSection() {
         keyExtractor={(item) => item}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.knowledgeFilterRow}
-        style={{ flexGrow: 0, marginBottom: 12 }}
+        style={{ flexGrow: 0, marginBottom: 14 }}
         renderItem={({ item, index }) => {
           const isActive = activeFilter === index;
           return (
@@ -613,7 +649,7 @@ function KnowledgeSection() {
         />
       ))}
 
-      {/* See all link */}
+      {/* See all */}
       <Pressable
         onPress={() => router.push('/knowledge')}
         style={({ pressed }) => [
@@ -632,7 +668,32 @@ function KnowledgeSection() {
   );
 }
 
-// ── Main Screen ──────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Following Empty State
+// ─────────────────────────────────────────────────────────────────────────────
+function FollowingEmpty() {
+  const { colors } = useTheme();
+  const { language } = useLanguage();
+  return (
+    <View style={styles.emptyContainer}>
+      <View style={[styles.emptyOrb, { backgroundColor: colors.accentLight }]}>
+        <Sparkles color={colors.accent} size={24} strokeWidth={2.6} />
+      </View>
+      <Text style={[styles.emptyTitle, { color: colors.text }]}>
+        {language === 'ar' ? 'لا يوجد منشورات بعد' : 'No posts yet'}
+      </Text>
+      <Text style={{ color: colors.textSecondary, textAlign: 'center' }}>
+        {language === 'ar'
+          ? 'تابع أشخاصاً ومجتمعات لترى منشوراتهم هنا'
+          : 'Follow people and communities to see their posts here'}
+      </Text>
+    </View>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main Screen
+// ─────────────────────────────────────────────────────────────────────────────
 export default function HomeScreen() {
   const router = useRouter();
   const { language } = useLanguage();
@@ -642,8 +703,7 @@ export default function HomeScreen() {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMsg, setToastMsg] = useState('');
   const [activeCategory, setActiveCategory] = useState('');
-  const [communityCategories] = useState<string[]>([]);
-  const [activeSection, setActiveSection] = useState<'feed' | 'knowledge'>('feed');
+  const [activeSection, setActiveSection] = useState<ActiveSection>('foryou');
 
   const feedQuery = useInfiniteQuery({
     queryKey: ['posts', 'feed'],
@@ -696,7 +756,7 @@ export default function HomeScreen() {
     [isAuthenticated, saveMutation, router],
   );
 
-  const renderItem = useCallback(
+  const renderFeedItem = useCallback(
     ({ item, index }: { item: EnrichedPost; index: number }) => (
       <FeedCard
         post={item}
@@ -712,68 +772,57 @@ export default function HomeScreen() {
 
   const isRefreshing = feedQuery.isRefetching && !feedQuery.isFetchingNextPage;
 
-  const FeedHeader = (
-    <>
-      <HomeTopBar />
-      <SectionSegment active={activeSection} onChange={setActiveSection} />
-      {activeSection === 'feed' ? (
-        <>
-          <ComposeCard />
-          <CategoryTabs
-            activeCategory={activeCategory}
-            onSelect={setActiveCategory}
-            extraCategories={communityCategories}
-          />
-          <View style={styles.feedTitleContainer}>
-            <Text style={[styles.feedTitle, { color: colors.text }]}>
-              {language === 'ar' ? 'أحدث التحليلات' : 'Latest Insights'}
-            </Text>
-            <Sparkles color={colors.accent} size={20} strokeWidth={2.5} />
-          </View>
-        </>
-      ) : (
-        <View style={styles.knowledgeHeader}>
-          <View style={styles.knowledgeTitleRow}>
-            <BookOpen size={20} color={colors.accent} strokeWidth={2.2} />
-            <Text style={[styles.knowledgeSectionTitle, { color: colors.text }]}>
-              {language === 'ar' ? 'مركز المعرفة' : 'Knowledge Center'}
-            </Text>
-          </View>
-          <Text style={[styles.knowledgeSectionSub, { color: colors.textSecondary }]}>
-            {language === 'ar'
-              ? 'أدلة، قوالب ودراسات حالة من خبراء الأعمال'
-              : 'Guides, templates & case studies from business experts'}
-          </Text>
-        </View>
-      )}
-    </>
-  );
-
+  // ── Knowledge tab ──
   if (activeSection === 'knowledge') {
     return (
       <View style={[styles.screen, { backgroundColor: colors.bg }]}>
         <SafeAreaView edges={['top']} style={styles.safeArea}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.listContent}
-          >
-            {FeedHeader}
+          <HomeHeader active={activeSection} onChange={setActiveSection} />
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.listContent}>
             <KnowledgeSection />
           </ScrollView>
         </SafeAreaView>
-        <Toast
-          visible={toastVisible}
-          message={toastMsg}
-          type="success"
-          onDismiss={() => setToastVisible(false)}
-        />
+        <Toast visible={toastVisible} message={toastMsg} type="success" onDismiss={() => setToastVisible(false)} />
       </View>
     );
   }
 
+  // ── Following tab ──
+  if (activeSection === 'following') {
+    return (
+      <View style={[styles.screen, { backgroundColor: colors.bg }]}>
+        <SafeAreaView edges={['top']} style={styles.safeArea}>
+          <HomeHeader active={activeSection} onChange={setActiveSection} />
+          <ComposeCard />
+          <FollowingEmpty />
+        </SafeAreaView>
+        <Toast visible={toastVisible} message={toastMsg} type="success" onDismiss={() => setToastVisible(false)} />
+      </View>
+    );
+  }
+
+  // ── For You tab (default feed) ──
+  const FeedListHeader = (
+    <>
+      <ComposeCard />
+      <CategoryTabs
+        activeCategory={activeCategory}
+        onSelect={setActiveCategory}
+        extraCategories={[]}
+      />
+      <View style={styles.feedTitleContainer}>
+        <Text style={[styles.feedTitle, { color: colors.text }]}>
+          {language === 'ar' ? 'أحدث التحليلات' : 'Latest Insights'}
+        </Text>
+        <Sparkles color={colors.accent} size={20} strokeWidth={2.5} />
+      </View>
+    </>
+  );
+
   return (
     <View style={[styles.screen, { backgroundColor: colors.bg }]}>
       <SafeAreaView edges={['top']} style={styles.safeArea}>
+        <HomeHeader active={activeSection} onChange={setActiveSection} />
         <LottiePullToRefreshWrapper
           isRefreshing={isRefreshing}
           onRefresh={() => feedQuery.refetch()}
@@ -781,8 +830,8 @@ export default function HomeScreen() {
           <FlatList
             data={allPosts}
             keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            ListHeaderComponent={FeedHeader}
+            renderItem={renderFeedItem}
+            ListHeaderComponent={FeedListHeader}
             ListEmptyComponent={
               feedQuery.isLoading ? <LoadingSkeleton /> : <EmptyFeed />
             }
@@ -795,13 +844,8 @@ export default function HomeScreen() {
             }}
           />
         </LottiePullToRefreshWrapper>
-        <Toast
-          visible={toastVisible}
-          message={toastMsg}
-          type="success"
-          onDismiss={() => setToastVisible(false)}
-        />
       </SafeAreaView>
+      <Toast visible={toastVisible} message={toastMsg} type="success" onDismiss={() => setToastVisible(false)} />
     </View>
   );
 }
@@ -828,147 +872,112 @@ function EmptyFeed() {
   );
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Styles
+// ─────────────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   safeArea: { flex: 1 },
   listContent: { paddingBottom: 100 },
 
-  // ── Header ──────────────────────────────────────────────────────────────
-  homeHeader: {
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 8,
-    paddingBottom: 14,
-  },
-  appTitle: {
-    fontSize: 22,
-    fontWeight: '900',
-    letterSpacing: -0.8,
-  },
-  heroActions: {
-    gap: 10,
-    alignItems: 'center',
-  },
-  heroControl: {
-    width: 46,
-    height: 46,
-    borderRadius: 16,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  notifDot: {
-    position: 'absolute',
-    top: 9,
-    right: 9,
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    borderWidth: 2,
-  },
-
-  // ── Category tabs ────────────────────────────────────────────────────────
-  catWrapper: { marginTop: 0, marginBottom: 14 },
-  catRow: { paddingHorizontal: 20, gap: 10, paddingBottom: 20 },
+  // category tabs
+  catWrapper: { marginBottom: 14 },
+  catRow: { paddingHorizontal: 20, gap: 10, paddingBottom: 4 },
   catPill: {
-    minHeight: 42,
-    paddingHorizontal: 18,
-    paddingVertical: 9,
-    borderRadius: 16,
+    minHeight: 38,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  catText: { fontSize: 15, fontWeight: '700' },
+  catText: { fontSize: 14, fontWeight: '600' },
 
-  // ── Compose card ─────────────────────────────────────────────────────────
-  composeCard: { marginHorizontal: 20, marginBottom: 16, marginTop: 14 },
+  // compose
+  composeCard: { marginHorizontal: 16, marginBottom: 14, marginTop: 14 },
   composeContent: { alignItems: 'center', gap: 12 },
   composeAvatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  composeAvatarText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
-  composePlaceholder: { flex: 1, fontSize: 15, fontWeight: '500' },
-  composeIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
+  composeAvatarText: { color: '#FFF', fontSize: 15, fontWeight: '800' },
+  composePlaceholder: { flex: 1, fontSize: 15, fontWeight: '500' },
+  composeIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 
-  // ── Feed title ────────────────────────────────────────────────────────────
+  // feed title
   feedTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
-    marginBottom: 16,
+    marginBottom: 14,
     gap: 8,
   },
-  feedTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.5 },
+  feedTitle: { fontSize: 19, fontWeight: '800', letterSpacing: -0.4 },
 
-  // ── Feed card ─────────────────────────────────────────────────────────────
-  feedCard: { marginHorizontal: 20, marginBottom: 16, borderRadius: 28 },
-  feedCardLarge: { minHeight: 280 },
-  feedCardInner: { padding: 22 },
-  feedHeader: { alignItems: 'center', gap: 12, marginBottom: 14 },
+  // feed card
+  feedCard: { marginHorizontal: 16, marginBottom: 14, borderRadius: 24 },
+  feedCardLarge: { minHeight: 260 },
+  feedCardInner: { padding: 20 },
+  feedHeader: { alignItems: 'center', gap: 12, marginBottom: 12 },
   feedAvatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 42,
+    height: 42,
+    borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  feedAvatarText: { color: '#FFF', fontSize: 17, fontWeight: '800' },
+  feedAvatarText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
   feedAuthorInfo: { flex: 1, gap: 2 },
-  feedAuthorName: { fontSize: 16, fontWeight: '700', letterSpacing: -0.3 },
-  feedAuthorRole: { fontSize: 13, fontWeight: '500' },
-  feedTime: { fontSize: 12, fontWeight: '600' },
-  feedContentContainer: { marginBottom: 18, position: 'relative' },
+  feedAuthorName: { fontSize: 15, fontWeight: '700', letterSpacing: -0.2 },
+  feedAuthorRole: { fontSize: 12, fontWeight: '500' },
+  feedTime: { fontSize: 11, fontWeight: '600' },
+  feedContentContainer: { marginBottom: 16, position: 'relative' },
   feedContent: { fontSize: 15, lineHeight: 24, letterSpacing: -0.1 },
-  feedContentLarge: { fontSize: 19, lineHeight: 30, fontWeight: '600' },
+  feedContentLarge: { fontSize: 18, lineHeight: 28, fontWeight: '600' },
   layerStripe: {
     position: 'absolute',
-    bottom: -8,
+    bottom: -6,
     left: 0,
     right: '35%',
-    height: 6,
-    borderRadius: 4,
+    height: 5,
+    borderRadius: 3,
   },
-  topicRow: { marginBottom: 18 },
-  topicBadge: { paddingHorizontal: 12, paddingVertical: 6 },
+  topicRow: { marginBottom: 16 },
+  topicBadge: { paddingHorizontal: 10, paddingVertical: 5 },
   topicText: { fontSize: 12, fontWeight: '700' },
   feedActions: {
     justifyContent: 'space-between',
     alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.1)',
-    paddingTop: 18,
+    paddingTop: 16,
   },
-  actionGroup: { gap: 18 },
+  actionGroup: { gap: 16 },
   actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   actionText: { fontSize: 13, fontWeight: '700' },
 
-  // ── Knowledge header ──────────────────────────────────────────────────────
+  // knowledge header
   knowledgeHeader: {
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 12,
-    gap: 6,
+    gap: 12,
+    alignItems: 'flex-start',
   },
-  knowledgeTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  knowledgeSectionTitle: { fontSize: 20, fontWeight: '800', letterSpacing: -0.5 },
-  knowledgeSectionSub: { fontSize: 13, lineHeight: 20 },
+  knowledgeSectionTitle: { fontSize: 19, fontWeight: '800', letterSpacing: -0.4 },
+  knowledgeSectionSub: { fontSize: 13, lineHeight: 20, marginTop: 2 },
 
-  // ── Knowledge filter ──────────────────────────────────────────────────────
+  // knowledge filter
   knowledgeFilterRow: { paddingHorizontal: 20, gap: 8, paddingBottom: 4 },
   knowledgeFilterPill: {
     paddingHorizontal: 16,
@@ -978,44 +987,32 @@ const styles = StyleSheet.create({
   },
   knowledgeFilterText: { fontSize: 13, fontWeight: '600' },
 
-  // ── Article cards ─────────────────────────────────────────────────────────
-  articleFeatured: {
-    marginHorizontal: 20,
-    marginBottom: 14,
-    borderRadius: 24,
-    minHeight: 200,
-  },
-  articleFeaturedInner: {
-    padding: 22,
-    gap: 10,
-  },
+  // article cards
+  articleFeatured: { marginHorizontal: 16, marginBottom: 12, borderRadius: 22, minHeight: 190 },
+  articleFeaturedInner: { padding: 20, gap: 10 },
   articleFeaturedTitle: {
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: '800',
     color: '#FFF',
-    lineHeight: 28,
-    letterSpacing: -0.4,
+    lineHeight: 26,
+    letterSpacing: -0.3,
   },
-  articleFeaturedDesc: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.75)',
-    lineHeight: 22,
-  },
+  articleFeaturedDesc: { fontSize: 13, color: 'rgba(255,255,255,0.75)', lineHeight: 20 },
   articleCard: {
-    marginHorizontal: 20,
-    marginBottom: 12,
+    marginHorizontal: 16,
+    marginBottom: 10,
     padding: 16,
-    borderRadius: 20,
+    borderRadius: 18,
     borderWidth: 1,
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 14,
+    gap: 12,
   },
-  articleCardLeft: { flex: 1, gap: 6 },
+  articleCardLeft: { flex: 1, gap: 5 },
   articleIconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1029,38 +1026,33 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   articleTypeText: { fontSize: 11, fontWeight: '700' },
-  articleTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    lineHeight: 22,
-    letterSpacing: -0.2,
-  },
-  articleDesc: { fontSize: 13, lineHeight: 19 },
-  articleMeta: { alignItems: 'center', gap: 10, marginTop: 2 },
-  articleAuthorRow: { alignItems: 'center', gap: 6 },
-  articleAuthorDot: { width: 5, height: 5, borderRadius: 3 },
-  articleAuthor: { fontSize: 12, fontWeight: '500' },
-  articleAuthorLight: { fontSize: 12, fontWeight: '500', color: 'rgba(255,255,255,0.75)' },
+  articleTitle: { fontSize: 14, fontWeight: '700', lineHeight: 20, letterSpacing: -0.2 },
+  articleDesc: { fontSize: 12, lineHeight: 18 },
+  articleMeta: { alignItems: 'center', gap: 8, marginTop: 2 },
+  articleAuthorRow: { alignItems: 'center', gap: 5 },
+  articleAuthorDot: { width: 4, height: 4, borderRadius: 2 },
+  articleAuthor: { fontSize: 11, fontWeight: '500' },
+  articleAuthorLight: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.75)' },
   articleReadTimeRow: { alignItems: 'center', gap: 4 },
-  articleReadTime: { fontSize: 12, fontWeight: '500' },
-  articleReadTimeLight: { fontSize: 12, fontWeight: '500', color: 'rgba(255,255,255,0.7)' },
+  articleReadTime: { fontSize: 11, fontWeight: '500' },
+  articleReadTimeLight: { fontSize: 11, fontWeight: '500', color: 'rgba(255,255,255,0.7)' },
 
-  // ── See all ───────────────────────────────────────────────────────────────
+  // see all
   seeAllBtn: {
-    margin: 20,
-    marginTop: 8,
+    margin: 16,
+    marginTop: 6,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 14,
-    borderRadius: 18,
+    borderRadius: 16,
     borderWidth: 1,
   },
   seeAllText: { fontSize: 14, fontWeight: '700' },
 
-  // ── Empty state ───────────────────────────────────────────────────────────
-  emptyContainer: { padding: 40, alignItems: 'center', gap: 8 },
+  // empty
+  emptyContainer: { padding: 40, alignItems: 'center', gap: 10 },
   emptyOrb: {
     width: 56,
     height: 56,
@@ -1068,5 +1060,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  emptyTitle: { fontSize: 20, fontWeight: '800' },
+  emptyTitle: { fontSize: 18, fontWeight: '800' },
 });
