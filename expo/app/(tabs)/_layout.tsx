@@ -7,7 +7,7 @@ import {
   User,
 } from 'lucide-react-native';
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { useLanguage } from '@/providers/LanguageProvider';
@@ -18,11 +18,11 @@ export default function TabLayout() {
   const { colors, isDark } = useTheme();
 
   const tabLabels = {
-    home: language === 'ar' ? 'الرئيسية' : 'Home',
-    communities: language === 'ar' ? 'اكتشف' : 'Discover',
-    messages: language === 'ar' ? 'الرسائل' : 'Messages',
-    marketplace: language === 'ar' ? 'السوق' : 'Market',
-    more: language === 'ar' ? 'حسابي' : 'Profile',
+    home:        language === 'ar' ? 'الرئيسية' : 'Home',
+    communities: language === 'ar' ? 'اكتشف'   : 'Discover',
+    messages:    language === 'ar' ? 'الرسائل'  : 'Messages',
+    marketplace: language === 'ar' ? 'السوق'    : 'Market',
+    more:        language === 'ar' ? 'حسابي'    : 'Profile',
   };
 
   return (
@@ -35,44 +35,47 @@ export default function TabLayout() {
           backgroundColor: 'transparent',
           borderTopWidth: 0,
           position: 'absolute',
-          bottom: 24,
-          left: 20,
-          right: 20,
-          height: 72,
-          borderRadius: 36,
+          bottom: 20,
+          left: 16,
+          right: 16,
+          height: 68,
+          borderRadius: 34,
           paddingBottom: 0,
           overflow: 'hidden',
           elevation: 0,
           shadowOpacity: 0,
-          shadowOffset: { width: 0, height: 0 },
-          shadowRadius: 0,
         },
         tabBarBackground: () => (
           <View
             style={[
               StyleSheet.absoluteFill,
               {
-                borderRadius: 36,
-                borderWidth: 1,
+                borderRadius: 34,
+                borderWidth: StyleSheet.hairlineWidth,
                 borderColor: colors.tabBarBorder,
                 overflow: 'hidden',
               },
             ]}
           >
             <LinearGradient
-              colors={isDark ? ['rgba(15, 23, 42, 0.9)', 'rgba(15, 23, 42, 0.7)'] : ['rgba(255, 255, 255, 0.95)', 'rgba(255, 255, 255, 0.85)']}
+              colors={
+                isDark
+                  ? ['rgba(15,23,42,0.96)', 'rgba(15,23,42,0.82)']
+                  : ['rgba(255,255,255,0.98)', 'rgba(255,255,255,0.90)']
+              }
               style={StyleSheet.absoluteFill}
             />
           </View>
         ),
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '700' as const,
+          fontSize: 10,
+          fontWeight: '600' as const,
           marginBottom: 8,
-          lineHeight: 14,
+          lineHeight: 13,
+          letterSpacing: 0.1,
         },
         tabBarItemStyle: {
-          height: 72,
+          height: 68,
           paddingTop: 6,
         },
       }}
@@ -83,10 +86,9 @@ export default function TabLayout() {
           title: tabLabels.home,
           tabBarIcon: ({ color, focused }) => (
             <View style={s.iconWrap}>
-              {focused && (
-                <View style={[s.activeGlow, { backgroundColor: colors.accent }]} />
-              )}
-              <Home color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+              {focused && <View style={[s.activeGlow, { backgroundColor: colors.accent }]} />}
+              <Home color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+              {focused && <View style={[s.activeDot, { backgroundColor: colors.accent }]} />}
             </View>
           ),
         }}
@@ -97,10 +99,9 @@ export default function TabLayout() {
           title: tabLabels.communities,
           tabBarIcon: ({ color, focused }) => (
             <View style={s.iconWrap}>
-              {focused && (
-                <View style={[s.activeGlow, { backgroundColor: colors.accent }]} />
-              )}
-              <Compass color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+              {focused && <View style={[s.activeGlow, { backgroundColor: colors.accent }]} />}
+              <Compass color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+              {focused && <View style={[s.activeDot, { backgroundColor: colors.accent }]} />}
             </View>
           ),
         }}
@@ -111,10 +112,11 @@ export default function TabLayout() {
           title: tabLabels.messages,
           tabBarIcon: ({ color, focused }) => (
             <View style={s.iconWrap}>
-              {focused && (
-                <View style={[s.activeGlow, { backgroundColor: colors.accent }]} />
-              )}
-              <MessageSquare color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+              {focused && <View style={[s.activeGlow, { backgroundColor: colors.accent }]} />}
+              <MessageSquare color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+              {focused && <View style={[s.activeDot, { backgroundColor: colors.accent }]} />}
+              {/* Unread dot */}
+              <View style={[s.unreadDot, { backgroundColor: colors.error, borderColor: isDark ? '#020617' : '#F8FAFC' }]} />
             </View>
           ),
         }}
@@ -125,10 +127,9 @@ export default function TabLayout() {
           title: tabLabels.marketplace,
           tabBarIcon: ({ color, focused }) => (
             <View style={s.iconWrap}>
-              {focused && (
-                <View style={[s.activeGlow, { backgroundColor: colors.accent }]} />
-              )}
-              <ShoppingBag color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+              {focused && <View style={[s.activeGlow, { backgroundColor: colors.accent }]} />}
+              <ShoppingBag color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+              {focused && <View style={[s.activeDot, { backgroundColor: colors.accent }]} />}
             </View>
           ),
         }}
@@ -139,10 +140,9 @@ export default function TabLayout() {
           title: tabLabels.more,
           tabBarIcon: ({ color, focused }) => (
             <View style={s.iconWrap}>
-              {focused && (
-                <View style={[s.activeGlow, { backgroundColor: colors.accent }]} />
-              )}
-              <User color={color} size={22} strokeWidth={focused ? 2.5 : 2} />
+              {focused && <View style={[s.activeGlow, { backgroundColor: colors.accent }]} />}
+              <User color={color} size={22} strokeWidth={focused ? 2.5 : 1.8} />
+              {focused && <View style={[s.activeDot, { backgroundColor: colors.accent }]} />}
             </View>
           ),
         }}
@@ -155,14 +155,31 @@ const s = StyleSheet.create({
   iconWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 50,
-    height: 34,
+    width: 48,
+    height: 32,
+    position: 'relative',
   },
   activeGlow: {
     position: 'absolute',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     opacity: 0.1,
+  },
+  activeDot: {
+    position: 'absolute',
+    bottom: -4,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+  },
+  unreadDot: {
+    position: 'absolute',
+    top: 0,
+    right: 6,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    borderWidth: 1.5,
   },
 });

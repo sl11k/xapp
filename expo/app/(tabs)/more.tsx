@@ -98,57 +98,65 @@ function ProfileHeader({ stats, onStatPress }: { stats: UserStats | null; onStat
 
   return (
     <Animated.View style={[styles.profileSection, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+      {/* ── LinkedIn-style cover banner ── */}
       <LinearGradient
         colors={isDark
-          ? ['rgba(0,201,167,0.1)', 'rgba(129,140,248,0.05)', 'transparent']
-          : ['rgba(0,168,143,0.06)', 'rgba(99,102,241,0.03)', 'transparent']
+          ? ['#1e1b4b', '#312e81', '#1e1b4b']
+          : ['#6366F1', '#818CF8', '#A5B4FC']
         }
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={styles.profileGradient}
-      />
-
-      <View style={styles.profileTopBar}>
-        <View style={[styles.profileRow, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
-          <View style={styles.avatarContainer}>
-            <LinearGradient
-              colors={['#00C9A7', '#00E5C3']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.avatarGradientRing}
-            >
-              <View style={[styles.avatarInner, { backgroundColor: isDark ? colors.bg : colors.bgCard }]}>
-                <LinearGradient
-                  colors={['#00C9A7', '#00E5C3']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.avatarLarge}
-                >
-                  {isAuthenticated ? (
-                    <Text style={styles.avatarLargeText}>{nameInitial}</Text>
-                  ) : (
-                    <UserRound color="#FFF" size={30} strokeWidth={1.8} />
-                  )}
-                </LinearGradient>
-              </View>
-            </LinearGradient>
-            {isAuthenticated && (
-              <View style={[styles.onlineIndicator, { backgroundColor: '#00C9A7', borderColor: isDark ? colors.bg : colors.bgCard }]} />
-            )}
-          </View>
-          <View style={[styles.profileInfo, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
-            <Text style={[styles.profileName, { color: colors.text }]}>{displayName}</Text>
-            <Text style={[styles.profileRole, { textAlign: isRTL ? 'right' : 'left', color: colors.textSecondary }]}>
-              {displayRole}
-            </Text>
-            {isAuthenticated ? (
-              <View style={[styles.repBadge, { backgroundColor: colors.orangeLight }]}>
-                <Text style={styles.repEmoji}>{REPUTATION_LEVELS[repLevel].emoji}</Text>
-                <Text style={[styles.repText, { color: colors.orange }]}>{repLabel}</Text>
-              </View>
-            ) : null}
-          </View>
+        style={styles.coverBanner}
+      >
+        <View style={styles.coverPattern}>
+          {[...Array(6)].map((_, i) => (
+            <View key={i} style={[styles.coverDot, { opacity: 0.12 + i * 0.04, left: i * 52 + 10, top: i % 2 === 0 ? 10 : 28 }]} />
+          ))}
+        </View>
+        <View style={[styles.coverActions, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
           <LanguageToggle />
+        </View>
+      </LinearGradient>
+
+      {/* ── Avatar overlapping banner (LinkedIn style) ── */}
+      <View style={[styles.profileTopBar, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
+        <View style={styles.avatarContainer}>
+          <LinearGradient
+            colors={['#00C9A7', '#00E5C3']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.avatarGradientRing}
+          >
+            <View style={[styles.avatarInner, { backgroundColor: isDark ? colors.bg : colors.bgCard }]}>
+              <LinearGradient
+                colors={['#00C9A7', '#00E5C3']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.avatarLarge}
+              >
+                {isAuthenticated ? (
+                  <Text style={styles.avatarLargeText}>{nameInitial}</Text>
+                ) : (
+                  <UserRound color="#FFF" size={30} strokeWidth={1.8} />
+                )}
+              </LinearGradient>
+            </View>
+          </LinearGradient>
+          {isAuthenticated && (
+            <View style={[styles.onlineIndicator, { backgroundColor: '#00C9A7', borderColor: isDark ? colors.bg : colors.bgCard }]} />
+          )}
+        </View>
+        <View style={[styles.profileInfo, { alignItems: isRTL ? 'flex-end' : 'flex-start' }]}>
+          <Text style={[styles.profileName, { color: colors.text }]}>{displayName}</Text>
+          <Text style={[styles.profileRole, { textAlign: isRTL ? 'right' : 'left', color: colors.textSecondary }]}>
+            {displayRole}
+          </Text>
+          {isAuthenticated ? (
+            <View style={[styles.repBadge, { backgroundColor: colors.orangeLight }]}>
+              <Text style={styles.repEmoji}>{REPUTATION_LEVELS[repLevel].emoji}</Text>
+              <Text style={[styles.repText, { color: colors.orange }]}>{repLabel}</Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -743,18 +751,43 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   safeArea: { flex: 1 },
   scrollContent: { paddingBottom: 100 },
-  profileSection: { paddingBottom: 16, gap: 14, overflow: 'hidden' },
-  profileGradient: { position: 'absolute', top: 0, left: 0, right: 0, height: 220 },
-  profileTopBar: { paddingHorizontal: 20, paddingTop: 16 },
-  profileRow: { alignItems: 'center', gap: 14 },
+  profileSection: { paddingBottom: 16, gap: 0, overflow: 'hidden' },
+  coverBanner: {
+    height: 110,
+    width: '100%',
+    overflow: 'hidden',
+    position: 'relative',
+  },
+  coverPattern: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  coverDot: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#FFF',
+  },
+  coverActions: {
+    position: 'absolute',
+    top: 12,
+    right: 16,
+    left: 16,
+    justifyContent: 'flex-end',
+  },
+  profileTopBar: {
+    paddingHorizontal: 20,
+    paddingTop: 0,
+    marginTop: -38,
+    alignItems: 'flex-end',
+    gap: 12,
+  },
   avatarContainer: { position: 'relative' },
   avatarGradientRing: { width: 82, height: 82, borderRadius: 41, alignItems: 'center', justifyContent: 'center' },
   avatarInner: { width: 76, height: 76, borderRadius: 38, alignItems: 'center', justifyContent: 'center' },
   avatarLarge: { width: 70, height: 70, borderRadius: 35, alignItems: 'center', justifyContent: 'center' },
   avatarLargeText: { fontSize: 27, fontWeight: '800' as const, color: '#FFF' },
   onlineIndicator: { position: 'absolute', bottom: 4, right: 4, width: 16, height: 16, borderRadius: 8, borderWidth: 3 },
-  profileInfo: { flex: 1, gap: 4 },
-  profileName: { fontSize: 24, fontWeight: '800' as const, letterSpacing: -0.5 },
+  profileInfo: { flex: 1, gap: 4, paddingTop: 42 },
+  profileName: { fontSize: 22, fontWeight: '800' as const, letterSpacing: -0.5 },
   profileRole: { fontSize: 14, letterSpacing: -0.1 },
   repBadge: {
     flexDirection: 'row',
