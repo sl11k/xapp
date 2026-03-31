@@ -5,13 +5,13 @@
       "name": "Expo (Mobile / Tunnel)",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["expo", "start", "--tunnel"],
-      "port": 8081
+      "autoPort": true
     },
     {
       "name": "Expo Web (Tunnel)",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["expo", "start", "--web"],
-      "port": 19006
+      "autoPort": true
     }
   ]
 }
